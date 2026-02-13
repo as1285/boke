@@ -1,9 +1,6 @@
 #!/bin/bash
-# -*- coding: utf-8 -*-
-"""
-服务器一键部署脚本
-在服务器上执行此脚本即可自动部署整个博客系统
-"""
+# 服务器一键部署脚本
+# 在服务器上执行此脚本即可自动部署整个博客系统
 
 set -e
 
@@ -66,12 +63,16 @@ check_requirements() {
         print_success "Docker已安装: $(docker --version)"
     fi
     
-    # 检查Docker Compose
-    if ! command -v docker-compose &> /dev/null; then
+    # 检查Docker Compose (支持新版 docker compose 命令)
+    if command -v docker-compose &> /dev/null; then
+        COMPOSE_CMD="docker-compose"
+        print_success "Docker Compose已安装: $(docker-compose --version)"
+    elif docker compose version &> /dev/null; then
+        COMPOSE_CMD="docker compose"
+        print_success "Docker Compose已安装: $(docker compose version)"
+    else
         print_warning "Docker Compose未安装，正在安装..."
         install_docker_compose
-    else
-        print_success "Docker Compose已安装: $(docker-compose --version)"
     fi
     
     # 检查Git
@@ -99,10 +100,13 @@ install_docker() {
 # 安装Docker Compose
 install_docker_compose() {
     print_info "安装Docker Compose..."
-    DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
-    curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    # 新版Docker已内置compose插件
+    apt-get update
+    apt-get install -y docker-compose-plugin
+    # 创建兼容的别名
+    echo 'docker compose "$@"' > /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
-    ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+    COMPOSE_CMD="docker-compose"
     print_success "Docker Compose安装完成"
 }
 
@@ -111,7 +115,7 @@ check_ports() {
     print_info "检查端口占用..."
     local ports=(80 443 5000)
     for port in "${ports[@]}"; do
-        if netstat -tuln | grep -q ":$port "; then
+        if netstat -tuln 2>/dev/null | grep -q ":$port " || ss -tuln 2>/dev/null | grep -q ":$port "; then
             print_warning "端口 $port 已被占用"
             read -p "是否继续部署? (y/n) " -n 1 -r
             echo
@@ -130,11 +134,11 @@ backup_existing() {
         print_warning "发现现有安装，正在备份..."
         mkdir -p "$BACKUP_DIR"
         local backup_name="${PROJECT_NAME}_$(date +%Y%m%d_%H%M%S).tar.gz"
-        tar -czf "${BACKUP_DIR}/${backup_name}" -C "$(dirname $INSTALL_DIR)" "$(basename $INSTALL_DIR)"
+        tar -czf "${BACKUP_DIR}/${backup_name}" -C "$(dirname $INSTALL_DIR)" "$(basename $INSTALL_DIR)" 2>/dev/null || true
         print_success "备份完成: ${BACKUP_DIR}/${backup_name}"
         
         # 停止旧服务
-        cd "$INSTALL_DIR" && docker-compose down 2>/dev/null || true
+        cd "$INSTALL_DIR" && $COMPOSE_CMD down 2>/dev/null || true
     fi
 }
 
@@ -165,7 +169,7 @@ setup_environment() {
     mkdir -p data nginx/ssl
     
     # 生成随机JWT密钥
-    JWT_SECRET=$(openssl rand -base64 32)
+    JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || echo "your-secret-key-$(date +%s)")
     
     # 创建环境变量文件
     cat > .env << EOF
@@ -183,7 +187,7 @@ LOG_LEVEL=INFO
 EOF
     
     print_success "环境配置完成"
-    print_info "JWT密钥已生成: ${JWT_SECRET:0:20}..."
+    print_info "JWT密钥已生成"
 }
 
 # 构建和启动服务
@@ -192,16 +196,16 @@ build_and_start() {
     cd "$INSTALL_DIR"
     
     # 拉取最新镜像
-    docker-compose pull
+    $COMPOSE_CMD pull
     
     # 构建镜像
-    docker-compose build --no-cache
+    $COMPOSE_CMD build --no-cache
     
     print_success "镜像构建完成"
     
     # 启动服务
     print_info "启动服务..."
-    docker-compose up -d
+    $COMPOSE_CMD up -d
     
     # 等待服务启动
     print_info "等待服务启动..."
@@ -231,7 +235,7 @@ check_service_status() {
     
     if [ $attempt -gt $max_attempts ]; then
         print_error "服务启动超时"
-        print_info "查看日志: docker-compose logs"
+        print_info "查看日志: $COMPOSE_CMD logs"
         exit 1
     fi
     
@@ -256,10 +260,14 @@ mkdir -p "$BACKUP_DIR"
 cd "$INSTALL_DIR"
 
 # 备份数据库
-docker-compose exec -T backend tar czf - data > "${BACKUP_DIR}/blog_data_${DATE}.tar.gz"
+if command -v docker-compose &> /dev/null; then
+    docker-compose exec -T backend tar czf - data > "${BACKUP_DIR}/blog_data_${DATE}.tar.gz" 2>/dev/null || true
+elif docker compose version &> /dev/null; then
+    docker compose exec -T backend tar czf - data > "${BACKUP_DIR}/blog_data_${DATE}.tar.gz" 2>/dev/null || true
+fi
 
 # 保留最近7天的备份
-find "$BACKUP_DIR" -name "blog_data_*.tar.gz" -mtime +7 -delete
+find "$BACKUP_DIR" -name "blog_data_*.tar.gz" -mtime +7 -delete 2>/dev/null || true
 EOF
     
     chmod +x /usr/local/bin/backup-blog.sh
@@ -276,27 +284,27 @@ show_access_info() {
     
     echo ""
     echo "=========================================="
-    echo "  🎉 部署完成！"
+    echo "  部署完成！"
     echo "=========================================="
     echo ""
-    echo "📍 访问地址:"
+    echo "访问地址:"
     echo "   前台页面: http://${server_ip}"
     echo "   后台管理: http://${server_ip}/admin"
     echo "   API文档:  http://${server_ip}:5000"
     echo ""
-    echo "🔑 默认管理员账号:"
+    echo "默认管理员账号:"
     echo "   用户名: admin"
     echo "   密码: admin123"
     echo ""
-    echo "📁 项目目录: ${INSTALL_DIR}"
-    echo "💾 数据目录: ${INSTALL_DIR}/data"
-    echo "📋 日志查看: docker-compose logs -f"
+    echo "项目目录: ${INSTALL_DIR}"
+    echo "数据目录: ${INSTALL_DIR}/data"
+    echo "日志查看: $COMPOSE_CMD logs -f"
     echo ""
-    echo "⚡ 常用命令:"
-    echo "   停止服务: docker-compose down"
-    echo "   重启服务: docker-compose restart"
-    echo "   查看状态: docker-compose ps"
-    echo "   更新代码: cd ${INSTALL_DIR} && git pull && docker-compose up -d --build"
+    echo "常用命令:"
+    echo "   停止服务: $COMPOSE_CMD down"
+    echo "   重启服务: $COMPOSE_CMD restart"
+    echo "   查看状态: $COMPOSE_CMD ps"
+    echo "   更新代码: cd ${INSTALL_DIR} && git pull && $COMPOSE_CMD up -d --build"
     echo ""
     echo "=========================================="
 }
