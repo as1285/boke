@@ -134,11 +134,14 @@ backup_existing() {
         print_warning "发现现有安装，正在备份..."
         mkdir -p "$BACKUP_DIR"
         local backup_name="${PROJECT_NAME}_$(date +%Y%m%d_%H%M%S).tar.gz"
-        tar -czf "${BACKUP_DIR}/${backup_name}" -C "$(dirname $INSTALL_DIR)" "$(basename $INSTALL_DIR)" 2>/dev/null || true
-        print_success "备份完成: ${BACKUP_DIR}/${backup_name}"
         
         # 停止旧服务
         cd "$INSTALL_DIR" && $COMPOSE_CMD down 2>/dev/null || true
+        
+        # 返回上级目录再备份
+        cd /
+        tar -czf "${BACKUP_DIR}/${backup_name}" -C "$(dirname $INSTALL_DIR)" "$(basename $INSTALL_DIR)" 2>/dev/null || true
+        print_success "备份完成: ${BACKUP_DIR}/${backup_name}"
     fi
 }
 
