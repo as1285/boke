@@ -1,0 +1,163 @@
+# -*- coding: utf-8 -*-
+"""
+GitHub Actions CI/CD 工作流
+代码推送到master分支后自动部署到服务器
+"""
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  # 构建和测试
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    # 设置Python环境
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    # 缓存pip依赖
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+    
+    # 安装后端依赖
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+    
+    # 后端代码检查
+    - name: Lint backend code
+      run: |
+        cd backend
+        pip install flake8
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+    
+    # 设置Node.js环境
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    # 安装前端依赖
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    # 前端代码检查
+    - name: Lint frontend code
+      run: |
+        cd frontend
+        npm run lint || true
+    
+    # 构建前端
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+    
+    # 上传构建产物
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-dist
+        path: frontend/dist
+
+  # 部署到服务器
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    # 配置SSH
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    # 添加服务器到known_hosts
+    - name: Add server to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+    
+    # 部署到服务器
+    - name: Deploy to server
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        echo "🚀 开始部署到服务器..."
+        
+        # 在服务器上执行部署命令
+        ssh $SERVER_USER@$SERVER_IP << 'EOF'
+          set -e
+          
+          echo "📦 进入项目目录..."
+          cd /opt/flask-blog
+          
+          echo "📥 拉取最新代码..."
+          git pull origin master
+          
+          echo "🔧 重新构建并启动服务..."
+          docker-compose down
+          docker-compose build --no-cache
+          docker-compose up -d
+          
+          echo "✅ 清理旧镜像..."
+          docker image prune -f
+          
+          echo "🎉 部署完成！"
+        EOF
+    
+    # 检查部署状态
+    - name: Check deployment status
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+      run: |
+        echo "🔍 检查服务状态..."
+        sleep 10
+        
+        # 检查后端API
+        if curl -s http://$SERVER_IP:5000/api/posts > /dev/null; then
+          echo "✅ 后端服务运行正常"
+        else
+          echo "❌ 后端服务检查失败"
+          exit 1
+        fi
+        
+        # 检查前端
+        if curl -s http://$SERVER_IP > /dev/null; then
+          echo "✅ 前端服务运行正常"
+        else
+          echo "❌ 前端服务检查失败"
+          exit 1
+        fi
+    
+    # 发送通知（可选）
+    - name: Send notification
+      if: always()
+      run: |
+        echo "部署状态: ${{ job.status }}"
+        # 这里可以添加邮件、钉钉、Slack等通知
