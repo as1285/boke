@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Docker Compose配置
-一键部署Flask博客系统
-"""
+# Docker Compose配置
+# 一键部署Flask博客系统
 
 version: '3.8'
 
