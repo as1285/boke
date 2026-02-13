@@ -12,7 +12,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4 text-center">
-                        <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" 
+                        <img src="{{ url_for('static', filename='uploads/' + (user.avatar if user.avatar else 'default_avatar.png')) }}" 
                              alt="{{ user.username }}" 
                              class="rounded-circle mb-3" 
                              width="120" height="120"
