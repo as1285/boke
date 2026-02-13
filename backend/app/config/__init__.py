@@ -41,8 +41,8 @@ class DevelopmentConfig(Config):
     """开发环境配置"""
     DEBUG = True
     
-    # 使用SQLite简化开发
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    # 使用环境变量或默认SQLite
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
     
     # 开发环境CORS允许所有
     CORS_ORIGINS = '*'
