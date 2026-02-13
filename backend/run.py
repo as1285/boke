@@ -4,6 +4,11 @@
 """
 
 import os
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
 from app import create_app, db
 from app.models import User, Post, Category, Tag, Comment
 
