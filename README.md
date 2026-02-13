@@ -317,6 +317,81 @@ server: {
 
 ## 🐛 常见问题
 
+### 部署问题
+
+#### 1. Nginx 403 Forbidden 错误
+**原因**：Nginx配置未正确加载或指向了错误目录
+
+**解决**：
+```bash
+# 检查Nginx配置
+sudo nginx -t
+
+# 确保sites-enabled目录被包含
+grep 'sites-enabled' /etc/nginx/nginx.conf
+
+# 如果没有，添加到http段：
+include /etc/nginx/sites-enabled/*;
+
+# 重启Nginx
+sudo systemctl restart nginx
+```
+
+#### 2. Docker容器无法启动
+**原因**：配置文件格式错误（Python风格注释）
+
+**解决**：
+- 检查 `docker-compose.yml`、`Dockerfile`、`nginx.conf` 是否有 `"""` 多行注释
+- 应该使用 `#` 单行注释
+
+#### 3. 前端容器不断重启
+**原因**：`frontend/nginx.conf` 格式错误
+
+**解决**：
+```bash
+# 检查nginx.conf语法
+docker logs flask-blog-frontend
+
+# 确保没有Python风格的多行注释 """
+```
+
+#### 4. 后端启动失败 - gunicorn未找到
+**原因**：`requirements.txt` 缺少 `gunicorn`
+
+**解决**：
+```bash
+# 进入后端容器安装
+docker exec -it flask-blog-backend pip install gunicorn
+
+# 或重新构建
+docker compose build --no-cache backend
+```
+
+#### 5. 无法登录 - 用户名或密码错误
+**原因**：数据库中没有创建默认管理员用户
+
+**解决**：
+```bash
+# 进入后端容器创建管理员
+docker exec -it flask-blog-backend bash
+
+python
+```
+
+然后执行：
+```python
+from run import create_app, db
+from app.models.user import User
+
+app = create_app()
+with app.app_context():
+    admin = User(username='admin', email='admin@example.com', is_admin=True)
+    admin.set_password('admin123')
+    db.session.add(admin)
+    db.session.commit()
+    print('管理员创建成功！')
+```
+
 ### 跨域问题
 - 检查后端CORS配置中的`CORS_ORIGINS`
 - 检查前端`vite.config.js`中的proxy配置
@@ -325,6 +400,18 @@ server: {
 - 确保`Authorization` Header格式：`Bearer <token>`
 - 检查Token是否过期
 - 确认JWT密钥一致
+
+## 📝 部署检查清单
+
+部署完成后，请检查：
+
+- [ ] Docker容器正常运行 `docker ps`
+- [ ] 端口监听正常 `ss -tlnp | grep -E '80|8080|5000'`
+- [ ] Nginx配置正确 `sudo nginx -t`
+- [ ] 本地访问正常 `curl http://localhost`
+- [ ] 创建管理员账号（首次部署必需）
+- [ ] 防火墙开放80端口 `sudo ufw allow 80`
+- [ ] 云服务器安全组开放80端口
 
 ## 📝 更新日志
 
