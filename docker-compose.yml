@@ -4,6 +4,24 @@
 version: '3.8'
 
 services:
+  # MySQL数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: flask-blog-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123456
+      - MYSQL_DATABASE=flask_blog
+      - MYSQL_USER=blog_user
+      - MYSQL_PASSWORD=blog_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - blog-network
+    command: --default-authentication-plugin=mysql_native_password
+
   # 后端服务
   backend:
     build:
@@ -15,10 +33,12 @@ services:
       - "5000:5000"
     environment:
       - FLASK_ENV=production
-      - DATABASE_URL=sqlite:///data/app.db
+      - DATABASE_URL=mysql+pymysql://blog_user:blog_password@mysql:3306/flask_blog
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-change-in-production}
     volumes:
       - ./data:/app/data
+    depends_on:
+      - mysql
     networks:
       - blog-network
 
@@ -35,6 +55,9 @@ services:
       - backend
     networks:
       - blog-network
+
+volumes:
+  mysql_data:
 
 networks:
   blog-network:
