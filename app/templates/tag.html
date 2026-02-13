@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tag.name }} - 标签 - Flask博客{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-tag"></i> 标签：{{ tag.name }}
+                    <small class="text-muted">({{ tag.get_post_count() }} 篇文章)</small>
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if posts %}
+                    {% for post in posts %}
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h5>
+                            <a href="{{ url_for('main.post_detail', slug=post.slug) }}" class="text-decoration-none">
+                                {{ post.title }}
+                            </a>
+                        </h5>
+                        <div class="text-muted small mb-2">
+                            <i class="bi bi-calendar"></i> {{ post.published_at.strftime('%Y-%m-%d') if post.published_at else post.created_at.strftime('%Y-%m-%d') }}
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-person"></i> {{ post.author.username }}
+                            {% if post.category %}
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-folder"></i> {{ post.category.name }}
+                            {% endif %}
+                        </div>
+                        <p class="mb-0">{{ post.summary or post.content[:150] + '...' }}</p>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- 分页 -->
+                    {% if pagination and pagination.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.tag_posts', slug=tag.slug, page=pagination.prev_num) }}">上一页</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.tag_posts', slug=tag.slug, page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.tag_posts', slug=tag.slug, page=pagination.next_num) }}">下一页</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <p class="mt-3 text-muted">该标签下暂无文章</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-tag"></i> 标签信息
+            </div>
+            <div class="card-body">
+                <p><strong>标签名称：</strong>{{ tag.name }}</p>
+                <p><strong>文章数量：</strong>{{ tag.get_post_count() }}</p>
+                <p><strong>创建时间：</strong>{{ tag.created_at.strftime('%Y-%m-%d') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}后台管理 - Flask博客{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 侧边栏 -->
+    <div class="col-md-3">
+        <div class="list-group">
+            <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action active">
+                <i class="bi bi-speedometer2"></i> 控制台
+            </a>
+            <a href="{{ url_for('admin.post_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-file-text"></i> 文章管理
+            </a>
+            <a href="{{ url_for('admin.category_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-folder"></i> 分类管理
+            </a>
+            <a href="{{ url_for('admin.comment_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-chat-dots"></i> 评论管理
+            </a>
+            <a href="{{ url_for('admin.user_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-people"></i> 用户管理
+            </a>
+        </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="col-md-9">
+        <h3 class="mb-4"><i class="bi bi-speedometer2"></i> 控制台</h3>
+        
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stats.total_posts }}</h5>
+                        <p class="card-text">总文章数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stats.published_posts }}</h5>
+                        <p class="card-text">已发布</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stats.draft_posts }}</h5>
+                        <p class="card-text">草稿箱</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stats.total_users }}</h5>
+                        <p class="card-text">用户数</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- 最近文章 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-file-text"></i> 最近文章</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_posts %}
+                        <ul class="list-group list-group-flush">
+                            {% for post in recent_posts %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{{ url_for('main.post_detail', slug=post.slug) }}">{{ post.title }}</a>
+                                    {% if not post.is_published %}
+                                    <span class="badge bg-warning">草稿</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ post.created_at.strftime('%m-%d') }}</small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted">暂无文章</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 最近评论 -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-chat-dots"></i> 最近评论</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_comments %}
+                        <ul class="list-group list-group-flush">
+                            {% for comment in recent_comments %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ comment.author.username }}</strong>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%m-%d') }}</small>
+                                </div>
+                                <p class="mb-0 text-truncate">{{ comment.content[:50] }}...</p>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted">暂无评论</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}关于 - Flask博客{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">
+                    <i class="bi bi-info-circle"></i> 关于本站
+                </h2>
+                
+                <div class="content">
+                    <h4>Flask个人博客系统</h4>
+                    <p>这是一个基于Python Flask框架开发的个人博客系统，具有以下特点：</p>
+                    
+                    <h5 class="mt-4">技术栈</h5>
+                    <ul>
+                        <li><strong>后端框架：</strong>Flask</li>
+                        <li><strong>数据库：</strong>MySQL</li>
+                        <li><strong>ORM：</strong>Flask-SQLAlchemy</li>
+                        <li><strong>用户认证：</strong>Flask-Login</li>
+                        <li><strong>表单验证：</strong>Flask-WTF</li>
+                        <li><strong>前端框架：</strong>Bootstrap 5</li>
+                        <li><strong>Markdown支持：</strong>Python-Markdown</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">功能特性</h5>
+                    <ul>
+                        <li>用户注册、登录、个人资料管理</li>
+                        <li>文章发布、编辑、删除，支持Markdown</li>
+                        <li>文章分类和标签管理</li>
+                        <li>评论系统，支持回复</li>
+                        <li>文章搜索功能</li>
+                        <li>响应式设计，适配移动端</li>
+                        <li>后台管理系统</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">联系我们</h5>
+                    <p>如有问题或建议，欢迎通过以下方式联系：</p>
+                    <ul>
+                        <li><i class="bi bi-envelope"></i> 邮箱：admin@example.com</li>
+                        <li><i class="bi bi-github"></i> GitHub：github.com/example</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

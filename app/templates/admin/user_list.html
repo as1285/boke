@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - Flask博客{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 侧边栏 -->
+    <div class="col-md-3">
+        <div class="list-group">
+            <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-speedometer2"></i> 控制台
+            </a>
+            <a href="{{ url_for('admin.post_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-file-text"></i> 文章管理
+            </a>
+            <a href="{{ url_for('admin.category_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-folder"></i> 分类管理
+            </a>
+            <a href="{{ url_for('admin.comment_list') }}" class="list-group-item list-group-item-action">
+                <i class="bi bi-chat-dots"></i> 评论管理
+            </a>
+            <a href="{{ url_for('admin.user_list') }}" class="list-group-item list-group-item-action active">
+                <i class="bi bi-people"></i> 用户管理
+            </a>
+        </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="col-md-9">
+        <h3 class="mb-4"><i class="bi bi-people"></i> 用户管理</h3>
+        
+        <!-- 用户列表 -->
+        <div class="card">
+            <div class="card-body">
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>角色</th>
+                                <th>状态</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.is_admin %}
+                                    <span class="badge bg-danger">管理员</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">普通用户</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">正常</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">禁用</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if user.id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('admin.toggle_admin', id=user.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="切换管理员权限">
+                                            <i class="bi bi-person-badge"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.toggle_active', id=user.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="切换账户状态">
+                                            <i class="bi bi-{{ 'lock' if user.is_active else 'unlock' }}"></i>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted">当前用户</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                {% if pagination and pagination.pages > 1 %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.user_list', page=pagination.prev_num) }}">上一页</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in pagination.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.user_list', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.user_list', page=pagination.next_num) }}">下一页</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="mt-3 text-muted">暂无用户</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
