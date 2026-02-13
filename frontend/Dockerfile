@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-前端Dockerfile
-使用Node.js 18官方镜像构建，Nginx运行
-"""
+# 前端Dockerfile
+# 使用Node.js 18官方镜像构建，Nginx运行
 
 # 构建阶段
 FROM node:18-alpine AS builder

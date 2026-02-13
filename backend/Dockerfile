@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-后端Dockerfile
-使用Python 3.11官方镜像
-"""
+# 后端Dockerfile
+# 使用Python 3.11官方镜像
 
 FROM python:3.11-slim
 
