@@ -34,6 +34,25 @@
         <div class="markdown-body" v-html="post.content_html"></div>
       </el-card>
       
+      <el-card class="author-card">
+        <template #header>
+          <h3>关于作者</h3>
+        </template>
+        <div class="author">
+          <img class="avatar" src="/default_avatar.png" alt="avatar" />
+          <div class="meta">
+            <div class="name">{{ post.author?.username || '作者' }}</div>
+            <div class="bio">分享开发实践与学习笔记，欢迎交流。</div>
+            <div class="links">
+              <el-link type="primary" href="https://github.com/as1285/boke" target="_blank">
+                <el-icon><Link /></el-icon>
+                <span style="margin-left:4px;">GitHub 仓库</span>
+              </el-link>
+            </div>
+          </div>
+        </div>
+      </el-card>
+      
       <!-- 评论区 -->
       <el-card class="comments-section">
         <template #header>
@@ -180,6 +199,30 @@ onMounted(() => {
 .markdown-body {
   line-height: 1.8;
   font-size: 16px;
+}
+
+.author-card{
+  margin-bottom: 20px;
+}
+.author{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.avatar{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid #e4e7ed;
+}
+.name{
+  font-weight:600;
+  margin-bottom:4px;
+}
+.bio{
+  color:#606266;
+  margin-bottom:6px;
 }
 
 .markdown-body :deep(h1),

@@ -1,5 +1,7 @@
 <template>
   <div class="home-page">
+    <div class="content-wrap">
+      <div class="main-col">
     <!-- 搜索栏 -->
     <div class="search-bar">
       <el-input
@@ -71,6 +73,11 @@
         @current-change="handleCurrentChange"
       />
     </div>
+      </div>
+      <aside class="side-col">
+        <AuthorWidget />
+      </aside>
+    </div>
   </div>
 </template>
 
@@ -79,6 +86,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getPosts } from '../api/posts'
 import { ElMessage } from 'element-plus'
+import AuthorWidget from '../components/AuthorWidget.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -153,9 +161,23 @@ watch(() => route.query.keyword, (newVal) => {
   padding: 20px 0;
 }
 
+.content-wrap{
+  display:flex;
+  gap: 20px;
+}
+
+.main-col{
+  flex: 1;
+  min-width: 0;
+}
+
+.side-col{
+  width: 300px;
+}
+
 .search-bar {
   max-width: 600px;
-  margin: 0 auto 30px;
+  margin: 0 0 30px 0;
 }
 
 .post-list {
