@@ -25,9 +25,13 @@ def client(app):
 @pytest.fixture()
 def admin_token(app, client):
     with app.app_context():
-        u = User(username="admin", email="admin@test.com", is_admin=True, is_active=True)
+        u = User.query.filter_by(username="admin").first()
+        if u is None:
+            u = User(username="admin", email="admin@test.com", is_admin=True, is_active=True)
+            db.session.add(u)
         u.set_password("admin123")
-        db.session.add(u)
+        u.is_admin = True
+        u.is_active = True
         db.session.commit()
     r = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
     assert r.status_code == 200

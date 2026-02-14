@@ -24,6 +24,8 @@ bleach==6.1.0
 Werkzeug==3.0.1
 python-dotenv==1.0.0
 email-validator==2.1.0
+requests==2.32.3
+beautifulsoup4==4.12.3
 
 # WSGI服务器
 gunicorn==21.2.0

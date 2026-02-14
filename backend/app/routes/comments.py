@@ -98,7 +98,7 @@ def create_comment(post_id):
 def delete_comment(id):
     """删除评论（需要管理员或评论作者）"""
     user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     comment = Comment.query.get_or_404(id)
     
     # 检查权限
