@@ -1,6 +1,6 @@
 <template>
   <div class="about-page">
-    <el-card>
+    <el-card class="about-card">
       <template #header>
         <h2>关于本站</h2>
       </template>
@@ -30,12 +30,49 @@
         </ul>
       </div>
     </el-card>
+
+    <el-card class="author-card" style="margin-top: 16px;">
+      <template #header>
+        <h2>作者介绍</h2>
+      </template>
+      <div class="author">
+        <img class="avatar" :src="avatarUrl" alt="avatar" />
+        <div class="meta">
+          <div class="name">作者：{{ authorName }}</div>
+          <div class="bio">{{ authorBio }}</div>
+          <div class="links">
+            <el-link type="primary" :href="githubUrl" target="_blank">
+              <el-icon><Link /></el-icon>
+              <span style="margin-left:4px;">GitHub 仓库</span>
+            </el-link>
+          </div>
+        </div>
+      </div>
+      <el-divider />
+      <div class="intro">
+        <p>本博客用于记录开发笔记、技术文章与项目实践，涵盖后端、前端、数据库与运维等内容，欢迎交流与反馈。</p>
+      </div>
+    </el-card>
   </div>
 </template>
+
+<script setup>
+import { ref } from 'vue'
+
+const authorName = 'as1285'
+const authorBio = '热爱开源与分享，关注后端架构、前端工程化与 DevOps 实践。'
+const githubUrl = 'https://github.com/as1285/boke'
+const avatarUrl = '/default_avatar.png'
+</script>
 
 <style scoped>
 .about-page {
   padding: 20px 0;
+}
+
+.about-card :deep(.el-card__header),
+.author-card :deep(.el-card__header) {
+  padding: 12px 16px;
 }
 
 .about-content h3 {
@@ -62,5 +99,29 @@
 .about-content li {
   margin-bottom: 8px;
   line-height: 1.6;
+}
+
+.author {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e4e7ed;
+}
+
+.meta .name {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.meta .bio {
+  color: #606266;
+  margin-bottom: 10px;
 }
 </style>

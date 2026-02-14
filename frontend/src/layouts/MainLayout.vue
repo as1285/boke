@@ -47,7 +47,9 @@
     </el-main>
     
     <el-footer class="footer">
-      <p>&copy; 2026 Flask博客系统. 基于Flask + Vue3开发.</p>
+      <p>&copy; 2026 Flask博客系统 · 基于 Flask + Vue3 开发 · 
+        <a class="github-link" href="https://github.com/as1285/boke" target="_blank" rel="noopener">GitHub</a>
+      </p>
     </el-footer>
   </el-container>
 </template>
@@ -138,5 +140,15 @@ const handleCommand = (command) => {
   text-align: center;
   color: #666;
   background: #f5f5f5;
+}
+
+.github-link {
+  color: #409eff;
+  text-decoration: none;
+  margin-left: 6px;
+}
+
+.github-link:hover {
+  text-decoration: underline;
 }
 </style>
