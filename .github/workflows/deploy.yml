@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-GitHub Actions CI/CD 工作流
-代码推送到master分支后自动部署到服务器
-"""
-
 name: CI/CD Pipeline
 
 on:
@@ -84,7 +78,7 @@ jobs:
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
     
     steps:
     - name: Checkout code
