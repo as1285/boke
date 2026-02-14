@@ -84,7 +84,7 @@ def get_post(slug):
 def create_post():
     """创建文章（需要管理员权限）"""
     user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     
     if not user or not user.is_admin:
         return api_response(403, '无权限操作'), 403
@@ -115,7 +115,7 @@ def create_post():
         # 处理标签
         if 'tag_ids' in data:
             for tag_id in data['tag_ids']:
-                tag = Tag.query.get(tag_id)
+                tag = db.session.get(Tag, tag_id)
                 if tag:
                     post.tags.append(tag)
             db.session.commit()
@@ -134,7 +134,7 @@ def create_post():
 def update_post(id):
     """更新文章（需要管理员权限）"""
     user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     
     if not user or not user.is_admin:
         return api_response(403, '无权限操作'), 403
@@ -163,7 +163,7 @@ def update_post(id):
         if 'tag_ids' in data:
             post.tags = []
             for tag_id in data['tag_ids']:
-                tag = Tag.query.get(tag_id)
+                tag = db.session.get(Tag, tag_id)
                 if tag:
                     post.tags.append(tag)
         

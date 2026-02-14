@@ -25,7 +25,7 @@ def api_response(code=200, msg='操作成功', data=None):
 def check_admin():
     """检查是否为管理员"""
     user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     return user and user.is_admin
 
 

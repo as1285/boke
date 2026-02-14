@@ -49,14 +49,14 @@
           />
         </el-form-item>
         
-        <el-form-item label="文章内容" prop="content">
-          <mavon-editor
-            v-model="form.content"
-            :toolbars="toolbars"
-            placeholder="请输入文章内容，支持Markdown格式"
-            style="min-height: 500px"
-          />
-        </el-form-item>
+<el-form-item label="文章内容" prop="content">
+  <MavonEditor
+    v-model="form.content"
+    :toolbars="toolbars"
+    placeholder="请输入文章内容，支持Markdown格式"
+    style="min-height: 500px"
+  />
+</el-form-item>
         
         <el-form-item>
           <el-checkbox v-model="form.is_published">立即发布</el-checkbox>
@@ -74,7 +74,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, defineAsyncComponent } from 'vue'
+import 'mavon-editor/dist/css/index.css'
+const MavonEditor = defineAsyncComponent(() => import('mavon-editor'))
 import { useRoute, useRouter } from 'vue-router'
 import { getCategories, getTags, createPost, updatePost, getPost } from '../../api/posts'
 import { ElMessage } from 'element-plus'

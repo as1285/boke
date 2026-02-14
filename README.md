@@ -153,14 +153,14 @@ pip install -r requirements.txt
 
 #### 启动服务
 ```bash
-# 开发模式
-python run.py
+# 开发模式（与前端代理端口一致）
+FLASK_CONFIG=development gunicorn -w 2 -b 0.0.0.0:5050 run:app
 
-# 生产模式
-gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app('production')"
+# 生产模式（示例）
+gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app('production')" 
 ```
 
-服务启动后访问：http://localhost:5000
+服务启动后访问（开发）：http://localhost:5050
 
 ### 2️⃣ 前端部署
 
@@ -308,12 +308,56 @@ server: {
   port: 5173,
   proxy: {
     '/api': {
-      target: 'http://localhost:5000',
+      target: 'http://localhost:5050',
       changeOrigin: true
     }
   }
 }
 ```
+
+## 🧑‍💻 本地联调（远程 MySQL 可选）
+
+如果你需要本地前后端连接远程服务器 MySQL 进行调试：
+
+1. 建立 SSH 隧道（本地 3307 → 服务器 3306）
+   ```bash
+   ssh -N -L 3307:127.0.0.1:3306 <your_user>@<your_server_ip>
+   ```
+2. 配置后端环境变量（backend/.env 或 shell）
+   ```
+   FLASK_CONFIG=development
+   DATABASE_URL=mysql+pymysql://<db_user>:<db_pass>@127.0.0.1:3307/<db_name>?charset=utf8mb4
+   ```
+3. 启动后端（5050端口）
+   ```bash
+   FLASK_CONFIG=development gunicorn -w 2 -b 0.0.0.0:5050 run:app
+   ```
+4. 启动前端（已代理到 5050）
+   ```bash
+   npm run dev
+   ```
+
+## ✅ 后端测试
+
+已提供最小化 API 自动化用例，覆盖基础业务流（登录、分类/标签、发文、列表）：
+
+```bash
+cd backend
+pip install pytest
+pytest -q
+```
+
+目录：`backend/tests`
+
+## 📝 变更记录（2026-02-14）
+
+- 前端代理端口更新到 5050：[vite.config.js](frontend/vite.config.js)
+- 后端开发启动方式调整为 5050 端口，便于联调
+- 修复 SQLAlchemy 2.x 兼容性：使用 `db.session.get` 替代 `Query.get`
+  - 位置：[posts.py](backend/app/routes/posts.py)、[tags.py](backend/app/routes/tags.py)
+- 新增后端 API 测试用例与固件
+  - 目录：[backend/tests](backend/tests)
+- 初始化开发环境基础分类/标签数据（用于下拉框展示）
 
 ## 🐛 常见问题
 

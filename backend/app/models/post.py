@@ -3,7 +3,7 @@
 文章、分类、标签模型
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import unicodedata
 from app import db
@@ -43,6 +43,10 @@ post_tags = db.Table('post_tags',
 )
 
 
+def now_utc():
+    return datetime.now(timezone.utc)
+
+
 class Category(db.Model):
     """分类模型"""
     __tablename__ = 'categories'
@@ -51,7 +55,7 @@ class Category(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     slug = db.Column(db.String(50), unique=True, nullable=False, index=True)
     description = db.Column(db.String(200), default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
     
     posts = db.relationship('Post', backref='category', lazy='dynamic')
     
@@ -66,7 +70,7 @@ class Category(db.Model):
         slug = slugify(name)
         # 如果slug为空（全是特殊字符），使用id占位
         if not slug:
-            slug = f"category-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            slug = f"category-{now_utc().strftime('%Y%m%d%H%M%S')}"
         return slug[:50]
     
     def to_dict(self):
@@ -86,7 +90,7 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True, nullable=False)
     slug = db.Column(db.String(30), unique=True, nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
     
     posts = db.relationship('Post', secondary=post_tags,
                            backref=db.backref('tags', lazy='dynamic'),
@@ -102,7 +106,7 @@ class Tag(db.Model):
         """生成slug"""
         slug = slugify(name)
         if not slug:
-            slug = f"tag-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            slug = f"tag-{now_utc().strftime('%Y%m%d%H%M%S')}"
         return slug[:30]
     
     def to_dict(self):
@@ -131,8 +135,8 @@ class Post(db.Model):
     is_published = db.Column(db.Boolean, default=False)
     view_count = db.Column(db.Integer, default=0)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc, index=True)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
     published_at = db.Column(db.DateTime)
     
     comments = db.relationship('Comment', backref='post', lazy='dynamic',
@@ -143,13 +147,13 @@ class Post(db.Model):
         if self.title and not self.slug:
             self.slug = self._generate_slug(self.title)
         if self.is_published and not self.published_at:
-            self.published_at = datetime.utcnow()
+            self.published_at = now_utc()
     
     @staticmethod
     def _generate_slug(title):
         """生成slug"""
         slug = slugify(title)
-        timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        timestamp = now_utc().strftime('%Y%m%d%H%M%S')
         # 如果slug为空，使用时间戳
         if not slug:
             slug = f"post-{timestamp}"
