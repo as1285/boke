@@ -13,6 +13,18 @@
   包含博客核心功能 + 测试技术资源导航 + 系统管理工具
 </p>
 
+## 🧭 目录导航
+- 功能特性
+- 技术栈
+- 项目结构
+- 快速开始（本地开发）
+- 数据初始化（造数脚本）
+- 接口概览（文章列表排序/筛选参数）
+- 测试
+- CI/CD 与发布
+- 部署（GitHub Actions 手动/发布触发）
+- 常见问题
+
 ## ✨ 功能特性
 
 ### 核心博客功能
@@ -29,6 +41,7 @@
 - 📚 **接口文档** - 系统接口文档在线查看
 - 👥 **用户管理** - 管理员查看用户信息、登录记录
 - 🔒 **登录记录** - 记录用户登录IP和时间
+- 🧑 **作者模块** - 关于页作者介绍、首页侧栏作者小组件、文章详情页作者卡片、页脚 GitHub 链接
 
 ## 🛠️ 技术栈
 
@@ -79,6 +92,8 @@ flask-blog/
 │   │   │   └── tech.py          # 测试技术资源路由
 │   │   └── 📂 utils/             # 工具函数
 │   │       └── logger.py        # API日志中间件
+│   ├── 📂 scripts/
+│   │   └── seed_data.py         # 造数脚本（用户/分类/标签/文章/评论）
 │   ├── 📄 requirements.txt       # Python依赖
 │   └── 📄 run.py                 # 启动入口
 │
@@ -107,6 +122,30 @@ flask-blog/
     ├── 📄 package.json           # Node.js依赖
     └── 📄 vite.config.js         # Vite配置
 ```
+
+## ⚡ 快速开始（本地开发）
+
+### 后端启动
+```bash
+cd backend
+pip install -r requirements.txt
+FLASK_CONFIG=development gunicorn -w 2 -b 0.0.0.0:5050 run:app
+```
+开发接口地址：http://localhost:5050
+
+### 前端启动
+```bash
+cd frontend
+npm install
+npm run dev
+```
+前端地址：http://localhost:5173（已代理到后端 5050）
+
+### 数据库配置
+- 开发环境默认 SQLite，也可通过环境变量指定 MySQL：
+  ```
+  DATABASE_URL=mysql+pymysql://<user>:<pass>@127.0.0.1:3306/<db>?charset=utf8mb4
+  ```
 
 ## 🚀 部署方式
 
@@ -185,11 +224,18 @@ npm run build
 ### 3️⃣ 初始化数据
 
 ```bash
-# 创建管理员账号和测试数据
-python create_test_post.py
+# 使用造数脚本（见 backend/scripts/seed_data.py）
+cd backend
+PYTHONPATH=. FLASK_CONFIG=development \
+.venv/bin/python -m scripts.seed_data \
+  --posts 100 \
+  --comments-min 1 \
+  --comments-max 3 \
+  --langs zh en \
+  --published-ratio 0.8
 ```
 
-默认管理员账号：`admin` / `admin123`
+默认管理员账号（如脚本首次运行自动创建）：`admin / Admin@123456`
 
 ## 📸 功能预览
 
@@ -239,6 +285,19 @@ python create_test_post.py
 | GET | `/api/admin/api-docs` | 接口文档 | 管理员 |
 | GET | `/api/admin/users` | 用户列表 | 管理员 |
 | GET | `/api/admin/users/stats` | 用户统计 | 管理员 |
+
+### 文章列表（排序/筛选/分页）
+```
+GET /api/posts
+参数：
+  page         默认 1
+  per_page     默认 20，上限 100
+  category_id  分类筛选
+  tag_id       标签筛选
+  keyword      标题/内容关键词
+  sort         published_at | created_at | views（默认 published_at）
+  order        desc | asc（默认 desc）
+```
 
 ## 🧪 测试技术资源分类
 
@@ -349,17 +408,40 @@ pytest -q
 
 目录：`backend/tests`
 
-## 📝 变更记录（2026-02-14）
+前端单测（Vitest）：
+```bash
+cd frontend
+npm run test:run
+```
 
-- 前端代理端口更新到 5050：[vite.config.js](frontend/vite.config.js)
-- 后端开发启动方式调整为 5050 端口，便于联调
-- 修复 SQLAlchemy 2.x 兼容性：使用 `db.session.get` 替代 `Query.get`
-  - 位置：[posts.py](backend/app/routes/posts.py)、[tags.py](backend/app/routes/tags.py)
-- 新增后端 API 测试用例与固件
-  - 目录：[backend/tests](backend/tests)
-- 初始化开发环境基础分类/标签数据（用于下拉框展示）
+## 🔄 CI / Release / Deploy
 
-## 🐛 常见问题
+### CI（推送/PR 到 master）
+- 工作流：`.github/workflows/ci.yml`
+- 动作：
+  - 后端：安装依赖 → `pytest -q`
+  - 前端：`npm ci` → `vitest run`
+- 查看：GitHub → Actions → CI
+
+### Release（打 tag vX.Y.Z）
+- 工作流：`.github/workflows/release.yml`
+- 动作：构建前端并打包 `dist.zip`，自动附加到 Release
+- 触发示例：
+  ```bash
+  git tag v1.0.1 -a -m "v1.0.1"
+  git push origin v1.0.1
+  ```
+
+### Deploy（手动/发布触发）
+- 工作流：`.github/workflows/deploy.yml`
+- 触发：
+  - 手动：Actions → CI/CD Pipeline → Run workflow
+  - 发布：Release published 事件
+- 必需仓库 Secrets：
+  - `SSH_PRIVATE_KEY`、`SERVER_IP`、`SERVER_USER`
+- 部署机需具备：git、Docker、docker-compose（或 docker compose）
+
+
 
 ### 部署问题
 
