@@ -5,6 +5,9 @@ on:
     branches: [ master, main ]
   pull_request:
     branches: [ master, main ]
+  workflow_dispatch:
+  release:
+    types: [ published ]
 
 jobs:
   # 构建和测试
@@ -78,7 +81,7 @@ jobs:
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'release' }}
     
     steps:
     - name: Checkout code
